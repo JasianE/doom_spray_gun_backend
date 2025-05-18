@@ -20,10 +20,6 @@ const port = new SerialPort({
 
 const parser = port.pipe(new ReadlineParser({ delimiter: '\n' }));
 
-parser.on('data', data =>{
-  console.log('got word from arduino:', data);
-});
-
 
 // Scraper
 app.listen(PORT, () => {
@@ -40,10 +36,10 @@ app.post("/scrape", async (req, res) => {
       const html = response.data; // parse the html and load it into cheerio
       const $ = cheerio.load(html); 
       $('video').each((index, element) => {
-        total_distractions = total_distractions + 300; //make videos worth 300 times
+        total_distractions = total_distractions + 5; //make videos worth 300 times
       })
       $('img').each((index, element) => {
-        total_distractions = total_distractions+300
+        total_distractions = total_distractions+3
       })
       for(let i = 0; i < extra_urls.length; i++){
         console.log(extra_urls[i], the_url)
@@ -53,7 +49,7 @@ app.post("/scrape", async (req, res) => {
       }
 
 
-      if(total_distractions >30 || isTheWebsiteDistracting){
+      if(total_distractions >30 || isTheWebsiteDistracting){ //change this in code demo to show how the backend works
         res.send('Distracting')
         port.write('push\n')
       } else {
@@ -62,4 +58,27 @@ app.post("/scrape", async (req, res) => {
     } catch (error) {
       res.status(500).json({ message: "Error accessing the URL" });
     }
+  });
+
+  process.on('SIGINT', () => {
+    console.log('Closing serial port...');
+    port.close((err) => {
+      if (err) {
+        console.error('Error closing port:', err.message);
+      } else {
+        console.log('Serial port closed');
+        process.exit(0);
+      }
+    });
+  });
+
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection:', reason);
+    port.close(() => process.exit(1));
+  });
+  
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    port.close(() => process.exit(1));
   });
