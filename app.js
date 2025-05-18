@@ -34,28 +34,27 @@ app.post("/scrape", async (req, res) => {
     const data = req.body;
     const extra_urls = req.body.extra_urls; // The urls that the user has blocked themselves
     const the_url = req.body.the_url; // The url that the user is currently accessing 
-    
     let isTheWebsiteDistracting = false; // Changes to true value if the url user is accesing is in extra_urls
     try {
       const response = await axios.get(the_url);
       const html = response.data; // parse the html and load it into cheerio
       const $ = cheerio.load(html); 
       $('video').each((index, element) => {
-        total_distractions = total_distractions + 30; //make videos worth 10 times
+        total_distractions = total_distractions + 300; //make videos worth 300 times
       })
       $('img').each((index, element) => {
-        total_distractions = total_distractions+1
+        total_distractions = total_distractions+300
       })
-
       for(let i = 0; i < extra_urls.length; i++){
+        console.log(extra_urls[i], the_url)
         if(extra_urls[i] == the_url){
           isTheWebsiteDistracting = true;
         }
       }
 
+
       if(total_distractions >30 || isTheWebsiteDistracting){
         res.send('Distracting')
-
         port.write('push\n')
       } else {
         res.send('Good')
